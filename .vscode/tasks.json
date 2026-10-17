@@ -1,0 +1,372 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "make init",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "init"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "make check-unit",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "check-unit"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        {
+          "owner": "ruff",
+          "source": "Ruff",
+          "fileLocation": [
+            "autoDetect",
+            "${workspaceFolder}"
+          ],
+          "pattern": {
+            "regexp": "^(.*):(\\d+):(\\d+): ([A-Z]+\\d+) (.*)$",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "code": 4,
+            "message": 5
+          },
+          "severity": "error"
+        },
+        {
+          "owner": "mypy",
+          "source": "mypy",
+          "fileLocation": [
+            "autoDetect",
+            "${workspaceFolder}"
+          ],
+          "pattern": {
+            "regexp": "^(.*):(\\d+):(\\d+): (error|warning|note): (.*)$",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "severity": 4,
+            "message": 5
+          }
+        },
+        {
+          "owner": "pymarkdown",
+          "source": "PyMarkdown",
+          "fileLocation": [
+            "autoDetect",
+            "${workspaceFolder}"
+          ],
+          "pattern": {
+            "regexp": "^(.*):(\\d+):(\\d+): (MD\\d+): (.*)$",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "code": 4,
+            "message": 5
+          },
+          "severity": "error"
+        },
+        "$gcc"
+      ]
+    },
+    {
+      "label": "make lint-python",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "lint-python"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        {
+          "owner": "ruff",
+          "source": "Ruff",
+          "fileLocation": [
+            "autoDetect",
+            "${workspaceFolder}"
+          ],
+          "pattern": {
+            "regexp": "^(.*):(\\d+):(\\d+): ([A-Z]+\\d+) (.*)$",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "code": 4,
+            "message": 5
+          },
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "label": "make lint-shell",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "lint-shell"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ]
+    },
+    {
+      "label": "make lint-docs",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "lint-docs"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        {
+          "owner": "pymarkdown",
+          "source": "PyMarkdown",
+          "fileLocation": [
+            "autoDetect",
+            "${workspaceFolder}"
+          ],
+          "pattern": {
+            "regexp": "^(.*):(\\d+):(\\d+): (MD\\d+): (.*)$",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "code": 4,
+            "message": 5
+          },
+          "severity": "error"
+        }
+      ]
+    },
+    {
+      "label": "make typecheck",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "typecheck"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        {
+          "owner": "mypy",
+          "source": "mypy",
+          "fileLocation": [
+            "autoDetect",
+            "${workspaceFolder}"
+          ],
+          "pattern": {
+            "regexp": "^(.*):(\\d+):(\\d+): (error|warning|note): (.*)$",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "severity": 4,
+            "message": 5
+          }
+        }
+      ]
+    },
+    {
+      "label": "make test-unit",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "test-unit"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "make test-postgresql",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "test-postgresql"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "make test-mongodb",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "test-mongodb"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "make test-integration",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "test-integration"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "make coverage",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "coverage"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "make coverage-report",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "coverage-report"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "make check",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "check"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        {
+          "owner": "ruff",
+          "source": "Ruff",
+          "fileLocation": [
+            "autoDetect",
+            "${workspaceFolder}"
+          ],
+          "pattern": {
+            "regexp": "^(.*):(\\d+):(\\d+): ([A-Z]+\\d+) (.*)$",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "code": 4,
+            "message": 5
+          },
+          "severity": "error"
+        },
+        {
+          "owner": "mypy",
+          "source": "mypy",
+          "fileLocation": [
+            "autoDetect",
+            "${workspaceFolder}"
+          ],
+          "pattern": {
+            "regexp": "^(.*):(\\d+):(\\d+): (error|warning|note): (.*)$",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "severity": 4,
+            "message": 5
+          }
+        },
+        {
+          "owner": "pymarkdown",
+          "source": "PyMarkdown",
+          "fileLocation": [
+            "autoDetect",
+            "${workspaceFolder}"
+          ],
+          "pattern": {
+            "regexp": "^(.*):(\\d+):(\\d+): (MD\\d+): (.*)$",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "code": 4,
+            "message": 5
+          },
+          "severity": "error"
+        },
+        "$gcc"
+      ],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "make audit",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "audit"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "make demo",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "demo"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "make benchmark",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "benchmark"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "make test-concurrency",
+      "type": "process",
+      "command": "make",
+      "args": [
+        "test-concurrency"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    }
+  ]
+}

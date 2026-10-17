@@ -1,0 +1,74 @@
+[project]
+name = "goit-cs-hw-03"
+version = "0.1.0"
+description = "PostgreSQL task manager and MongoDB CRUD homework"
+readme = "README.md"
+requires-python = ">=3.14,<3.15"
+dependencies = [
+    "faker>=30,<41",
+    "psycopg[binary]>=3.2,<4",
+    "pymongo>=4.10,<5",
+    "python-dotenv>=1.0,<2",
+]
+
+[dependency-groups]
+dev = [
+    "coverage[toml]>=7.10,<8",
+    "mypy>=1.18,<3",
+    "pip-audit>=2.10.1,<3",
+    "pytest>=8.4,<10",
+    "pymarkdownlnt>=0.9,<1",
+    "ruff>=0.14,<1",
+    "shellcheck-py>=0.11.0.1,<0.12",
+]
+
+[tool.uv]
+package = false
+prerelease = "disallow"
+
+[tool.ruff]
+target-version = "py314"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.mypy]
+python_version = "3.14"
+files = ["create_tables.py", "seed.py", "main.py", "conf", "scripts", "tests"]
+strict = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra --strict-markers --strict-config"
+filterwarnings = ["error"]
+markers = [
+    "integration: isolated Percona Docker stack (requires --integration)",
+    "postgresql: requires only the isolated PostgreSQL service",
+    "mongodb: requires only the isolated MongoDB service",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["create_tables", "seed", "main", "conf", "scripts"]
+relative_files = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+precision = 2
+fail_under = 90
+exclude_also = ['if __name__ == "__main__":']
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+[tool.coverage.xml]
+output = "coverage.xml"
+
+[tool.pymarkdown]
+plugins.md013.line_length = 100
+plugins.md013.code_block_line_length = 100
+plugins.md013.heading_line_length = 100
+plugins.md013.table_line_length = 100

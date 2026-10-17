@@ -1,0 +1,74 @@
+services:
+  postgres:
+    image: percona/percona-distribution-postgresql:17.11@sha256:b5e66df1a76d7309241e03d1bc741b53d2d867f27e21389e0512c81d05024969
+    environment:
+      POSTGRES_DB: ${PG_DB:?Run make init}
+      POSTGRES_USER: postgres
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+      POSTGRES_PASSWORD_FILE: /run/secrets/pg_admin_password
+      PG_APP_USER: ${PG_USER:?Run make init}
+      PG_APP_PASSWORD_FILE: /run/secrets/pg_password
+      PERCONA_TELEMETRY_DISABLE: "1"
+    secrets: [pg_admin_password, pg_password]
+    ports: ["127.0.0.1:${PG_PORT:-5433}:5432"]
+    volumes:
+      - pg_data:/data/db
+      - ./docker/archive-runner.sh:/opt/hw03/archive-runner.sh:ro
+      - ./docker/archive-postgres.sh:/opt/hw03/archive-postgres.sh:ro
+      - ./docker/init-postgres.sh:/docker-entrypoint-initdb.d/10-app.sh:ro
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          PGPASSWORD="$$(cat -- "$$PG_APP_PASSWORD_FILE")"
+          psql -X -q -h 127.0.0.1 -U "$$PG_APP_USER" -d "$$POSTGRES_DB"
+          -c 'SELECT 1' >/dev/null 2>&1
+      interval: 3s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+  mongodb:
+    image: percona/percona-server-mongodb:8.0.32-14@sha256:5ba5f240d2dc98bc6236ab1d79c0862c4b62dba9d98cd0ffdf716c30473d2d11
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/mongo_admin_password
+      MONGO_INITDB_DATABASE: ${MONGO_DB:?Run make init}
+      MONGO_APP_USER: ${MONGO_USER:?Run make init}
+      PERCONA_TELEMETRY_DISABLE: "1"
+    command: ["mongod", "--auth", "--bind_ip_all"]
+    secrets: [mongo_admin_password, mongo_password]
+    ports: ["127.0.0.1:${MONGO_PORT:-27018}:27017"]
+    volumes:
+      - mongo_data:/data/db
+      - ./docker/archive-runner.sh:/opt/hw03/archive-runner.sh:ro
+      - ./docker/archive-mongo.js:/opt/hw03/archive-mongo.js:ro
+      - ./docker/init-mongo.js:/docker-entrypoint-initdb.d/10-app.js:ro
+    healthcheck:
+      test:
+        - CMD
+        - mongosh
+        - --quiet
+        - --norc
+        - --eval
+        - >-
+          const appDb = db.getSiblingDB(process.env.MONGO_INITDB_DATABASE);
+          const password = require('fs').readFileSync('/run/secrets/mongo_password',
+          'utf8').replace(/\n$$/, '');
+          appDb.auth(process.env.MONGO_APP_USER, password);
+          quit(appDb.runCommand({find: 'cats', limit: 1}).ok === 1 ? 0 : 1);
+      interval: 3s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+secrets:
+  pg_password:
+    file: ${PG_PASSWORD_FILE:?Run make init}
+  pg_admin_password:
+    file: ${PG_ADMIN_PASSWORD_FILE:?Run make init}
+  mongo_password:
+    file: ${MONGO_PASSWORD_FILE:?Run make init}
+  mongo_admin_password:
+    file: ${MONGO_ADMIN_PASSWORD_FILE:?Run make init}
+volumes:
+  pg_data:
+  mongo_data:
