@@ -4,6 +4,7 @@ import json
 import os
 import secrets
 import stat
+import sys
 import tempfile
 from io import StringIO
 from pathlib import Path
@@ -118,8 +119,15 @@ def initialize(directory: Path) -> list[Path]:
 def main() -> int:
     try:
         created = initialize(ROOT)
-    except (ConfigurationError, OSError) as error:
+    except ConfigurationError as error:
         report_error("Помилка ініціалізації", error)
+        return 1
+    except OSError:
+        print(
+            "Помилка ініціалізації [FILESYSTEM]: перевірте права та вільне місце "
+            "в каталозі проєкту.",
+            file=sys.stderr,
+        )
         return 1
     print(f"Локальна конфігурація готова. Створено файлів: {len(created)}.")
     print("Далі: docker compose up -d --wait")

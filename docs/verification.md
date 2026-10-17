@@ -5,8 +5,8 @@
 ## Стан на 2026-10-17
 
 Останній повний `make check` перевірив поточний прикладний код, усі тести,
-SQL, Docker scripts і Compose-конфігурацію після виправлення перевірки зарезервованих
-імен PostgreSQL та обробки невалідного UTF-8 в env-файлі archive CLI.
+SQL, Docker scripts і Compose-конфігурацію після відокремлення діагностики
+помилок файлової системи в `make init`.
 SHA-256 порівняння підтверджує незмінність перевіреного snapshot.
 Документацію додатково перевірено після оновлення цього звіту.
 
@@ -17,11 +17,11 @@ Docker Desktop 4.95.0, Docker Engine 29.8.2, kernel `7.0.14-linuxkit`.
 
 | Перевірка | Результат |
 | --- | --- |
-| `make check` | 251 passed, 135,27 s; exit code 0 |
-| Склад повного прогону | 194 unit + 57 integration |
+| `make check` | 253 passed, 136,89 s; exit code 0 |
+| Склад повного прогону | 196 unit + 57 integration |
 | Ruff, ShellCheck, strict mypy, PyMarkdown | Успішно |
-| Coverage з урахуванням гілок | 96,91%; 910 statements, 224 branches; поріг 90% |
-| Окремий unit regression | 104 passed, 17,05 s; configuration, init, archive |
+| Coverage з урахуванням гілок | 96,92%; 914 statements, 224 branches; поріг 90% |
+| Окремий unit regression | 38 passed, 0,58 s; init |
 | Попередні два `make demo` | Exit code 0, текст побайтово однаковий |
 | Попередній benchmark CLI smoke check | 30 tasks, 3 повтори; exit code 0, SELECT незмінні |
 | Попередній `make benchmark` | 30 / 100 000 tasks, 5 повторів; цього разу не повторювався |
@@ -36,6 +36,9 @@ Docker Desktop 4.95.0, Docker Engine 29.8.2, kernel `7.0.14-linuxkit`.
 - Init: невалідні імена, хости, порти, ліміти часу та plaintext passwords відхиляються
   до створення `.env` чи секретів. Невалідне перевизначення середовища не змінює
   наявну конфігурацію й не відновлює відсутній секрет.
+- Діагностика init: відмова в доступі й брак місця повертають 1 та повідомлення
+  `[FILESYSTEM]` у stderr без тексту винятку чи шляху. Помилки конфігурації
+  зберігають діагностику `[CONFIG]`.
 - Зарезервовані імена: `public`/`none` відхиляються для `PG_USER`, а
   `template0`/`template1` — для `PG_DB`, до створення конфігурації. Перевірено межі
   цих правил для інших полів; Bash bootstrap і rotation відхиляють заборонені ролі
@@ -83,16 +86,16 @@ Docker Desktop 4.95.0, Docker Engine 29.8.2, kernel `7.0.14-linuxkit`.
 
 | Артефакт | Зміст |
 | --- | --- |
-| `artifacts/check-fix-review-1-3-2026-10-17.log` | Поточний `make check` і coverage |
-| `artifacts/fix-review-1-3-unit-2026-10-17.log` | Поточний unit regression |
+| `artifacts/check-coderabbit-init-2026-10-17.log` | Поточний `make check` і coverage |
+| `artifacts/coderabbit-init-regression-2026-10-17.log` | Поточний unit regression |
 | `artifacts/demo-fix-followup-1-3-4-1-2026-10-17.log` | Попередній перший demo |
 | `artifacts/demo-fix-followup-1-3-4-2-2026-10-17.log` | Попередній другий demo |
 | `artifacts/benchmark-fix-followup-1-3-4-2026-10-17.log` | Попередній benchmark CLI smoke check |
 | `artifacts/benchmarks/20261017T074659861018Z/results.json` | Плани попереднього smoke check |
 | `artifacts/benchmark-showcase-final-2026-10-17.log` | Попереднє вимірювання benchmark |
 | `artifacts/benchmarks/20261017T001858614098Z/results.json` | Усі плани й метадані |
-| `artifacts/cleanup-fix-review-1-3-2026-10-17.json` | Поточна перевірка залишених ресурсів |
-| `artifacts/source-manifest-fix-review-1-3-2026-10-17.json` | 62 файли поточного прогону |
+| `artifacts/cleanup-coderabbit-init-2026-10-17.json` | Поточна перевірка залишених ресурсів |
+| `artifacts/source-manifest-coderabbit-init-2026-10-17.json` | 62 файли поточного прогону |
 
 SHA-256 однакового demo-виводу:
 `57acb93d68fcbdd519806a5f03e93692bb22044ff8de3d03dc57af6e86f09d8a`.
@@ -135,8 +138,8 @@ GitLens, Better Comments і Todo Tree. Шляхи Mypy Type Checker і ShellChec
 `artifacts/documentation-collection-2026-10-17.log`.
 Ці історичні файли містять результати до додавання нових archive regression tests.
 
-Після поточних виправлень operations описує обмеження імен ролей/БД PostgreSQL
-і вимогу UTF-8 для archive env-файлу. Markdown повторно перевірено після оновлення
+Після поточного виправлення operations описує діагностику `FILESYSTEM` для `make init`.
+Markdown повторно перевірено після оновлення
 цього звіту. Посилання й блоки команд у цих виправленнях не змінювалися.
 
 ## Ідентичність джерел
@@ -146,7 +149,7 @@ Makefile, `.env.example`, Python metadata, lockfile та конфігураці�
 Робочий `.env`, секрети, caches, логи й документація виключені.
 
 SHA-256 snapshot останнього повного прогону:
-`01cf0395aa28131a6657272be785245b56f34a81ac0072c77d13bf5ef8502b23`.
+`1bcb3351ce4ffaf6903fdfd56343563c3f323dd0b3b4602d100274e9e616caa0`.
 
 Щоб записати новий manifest, не перезаписуючи докази попередніх перевірок:
 

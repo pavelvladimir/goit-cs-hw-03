@@ -1,5 +1,6 @@
 """Atomic local configuration and filesystem permissions."""
 
+import errno
 import os
 import stat
 import subprocess
@@ -187,12 +188,29 @@ def test_init_cli_and_errors(
 ) -> None:
     monkeypatch.setattr(init_local, "ROOT", local_config)
     assert init_local.main() == 0
+    capsys.readouterr()
     (local_config / ".env").chmod(0o644)
     assert init_local.main() == 1
-    assert "0600" in capsys.readouterr().err
-    with patch.object(init_local, "initialize", side_effect=OSError("secret-value")):
+    diagnostic = capsys.readouterr()
+    assert diagnostic.out == ""
+    assert "[CONFIG]" in diagnostic.err
+    assert "0600" in diagnostic.err
+
+
+@pytest.mark.parametrize("code", [errno.EACCES, errno.ENOSPC])
+def test_init_filesystem_error_is_safe_and_actionable(
+    code: int, capsys: pytest.CaptureFixture[str]
+) -> None:
+    error = OSError(code, "private-error-details", "/private/secret-path")
+    with patch.object(init_local, "initialize", side_effect=error):
         assert init_local.main() == 1
-        assert "secret-value" not in capsys.readouterr().err
+    diagnostic = capsys.readouterr()
+    assert diagnostic.out == ""
+    assert "[FILESYSTEM]" in diagnostic.err
+    assert "[DATABASE]" not in diagnostic.err
+    assert "права та вільне місце" in diagnostic.err
+    assert "private-error-details" not in diagnostic.err
+    assert "/private/secret-path" not in diagnostic.err
 
 
 def test_missing_or_invalid_dotenv(tmp_path: Path) -> None:
