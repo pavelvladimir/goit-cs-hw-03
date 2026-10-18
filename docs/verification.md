@@ -2,11 +2,11 @@
 
 [README](../README.md) · [Розробка](development.md) · [Експлуатація](operations.md)
 
-## Стан на 2026-10-17
+## Стан на 2026-10-18
 
 Останній повний `make check` перевірив поточний прикладний код, усі тести,
-SQL, Docker scripts і Compose-конфігурацію після відокремлення діагностики
-помилок файлової системи в `make init`.
+SQL, Docker scripts і Compose-конфігурацію після розрізнення результатів
+оновлення MongoDB через `matched_count` і `modified_count`.
 SHA-256 порівняння підтверджує незмінність перевіреного snapshot.
 Документацію додатково перевірено після оновлення цього звіту.
 
@@ -17,11 +17,11 @@ Docker Desktop 4.95.0, Docker Engine 29.8.2, kernel `7.0.14-linuxkit`.
 
 | Перевірка | Результат |
 | --- | --- |
-| `make check` | 253 passed, 136,89 s; exit code 0 |
-| Склад повного прогону | 196 unit + 57 integration |
+| `make check` | 257 passed, 137,83 s; exit code 0 |
+| Склад повного прогону | 200 unit + 57 integration |
 | Ruff, ShellCheck, strict mypy, PyMarkdown | Успішно |
-| Coverage з урахуванням гілок | 96,92%; 914 statements, 224 branches; поріг 90% |
-| Окремий unit regression | 38 passed, 0,58 s; init |
+| Coverage з урахуванням гілок | 96,96%; 921 statements, 232 branches; поріг 90% |
+| Окремий `make check-unit` | 200 passed, 22,50 s; exit code 0 |
 | Попередні два `make demo` | Exit code 0, текст побайтово однаковий |
 | Попередній benchmark CLI smoke check | 30 tasks, 3 повтори; exit code 0, SELECT незмінні |
 | Попередній `make benchmark` | 30 / 100 000 tasks, 5 повторів; цього разу не повторювався |
@@ -50,6 +50,12 @@ Docker Desktop 4.95.0, Docker Engine 29.8.2, kernel `7.0.14-linuxkit`.
   rollback, SQL statement/lock timeout і SIGINT без часткових вставок.
 - MongoDB: CRUD, меню, унікальність, валідація, права ролі та відновлення того самого
   CLI-процесу після справжнього stop/start сервера.
+- Оновлення MongoDB: зміна документа, повторне встановлення того самого віку,
+  повторна характеристика й відсутнє ім'я дають різні результати та повідомлення.
+  Серед двох одночасних `$addToSet` тієї самої характеристики лише один змінює
+  документ; для різних характеристик обидві зміни зберігаються.
+  При помилці запису меню не повідомляє про успіх, приховує деталі винятку
+  й дозволяє виконати наступну команду.
 - Обидві БД: збереження даних після restart, ротація паролів, backup/restore між
   незалежними проєктами з різними секретами. Пошкоджений/чужий bundle та непорожня
   ціль відхиляються; наявний backup не перезаписується.
@@ -79,23 +85,23 @@ Docker Desktop 4.95.0, Docker Engine 29.8.2, kernel `7.0.14-linuxkit`.
 
 Після поточного повного прогону не залишилося контейнерів, volumes
 або мереж `hw03-test-*`, `hw03-demo-*`, `hw03-benchmark-*`.
-Окремо перевірено, що раніше запущений сторонній сервіс залишився `running / healthy`.
+Перед запуском повного прогону інших запущених контейнерів не було.
 Це результат перевірки на момент завершення прогону, а не моніторинг поточного Docker.
 
 ## Локальні докази
 
 | Артефакт | Зміст |
 | --- | --- |
-| `artifacts/check-coderabbit-init-2026-10-17.log` | Поточний `make check` і coverage |
-| `artifacts/coderabbit-init-regression-2026-10-17.log` | Поточний unit regression |
+| `artifacts/check-mongo-outcomes-2026-10-18.log` | Поточний `make check` і coverage |
+| `artifacts/check-unit-mongo-outcomes-2026-10-18.log` | Поточний `make check-unit` |
 | `artifacts/demo-fix-followup-1-3-4-1-2026-10-17.log` | Попередній перший demo |
 | `artifacts/demo-fix-followup-1-3-4-2-2026-10-17.log` | Попередній другий demo |
 | `artifacts/benchmark-fix-followup-1-3-4-2026-10-17.log` | Попередній benchmark CLI smoke check |
 | `artifacts/benchmarks/20261017T074659861018Z/results.json` | Плани попереднього smoke check |
 | `artifacts/benchmark-showcase-final-2026-10-17.log` | Попереднє вимірювання benchmark |
 | `artifacts/benchmarks/20261017T001858614098Z/results.json` | Усі плани й метадані |
-| `artifacts/cleanup-coderabbit-init-2026-10-17.json` | Поточна перевірка залишених ресурсів |
-| `artifacts/source-manifest-coderabbit-init-2026-10-17.json` | 62 файли поточного прогону |
+| `artifacts/cleanup-mongo-outcomes-2026-10-18.json` | Поточна перевірка залишених ресурсів |
+| `artifacts/source-manifest-mongo-outcomes-2026-10-18.json` | 62 файли поточного прогону |
 
 SHA-256 однакового demo-виводу:
 `57acb93d68fcbdd519806a5f03e93692bb22044ff8de3d03dc57af6e86f09d8a`.
@@ -138,9 +144,10 @@ GitLens, Better Comments і Todo Tree. Шляхи Mypy Type Checker і ShellChec
 `artifacts/documentation-collection-2026-10-17.log`.
 Ці історичні файли містять результати до додавання нових archive regression tests.
 
-Після поточного виправлення operations описує діагностику `FILESYSTEM` для `make init`.
-Markdown повторно перевірено після оновлення
-цього звіту. Посилання й блоки команд у цих виправленнях не змінювалися.
+Після поточного доповнення документ MongoDB описує `UpdateResult`, три результати
+оновлення й обробку помилок запису в меню. Семантику лічильників звірено
+з офіційною документацією PyMongo, посилання додано до документа MongoDB.
+Markdown повторно перевірено після оновлення цього звіту; блоки команд не змінювалися.
 
 ## Ідентичність джерел
 
@@ -149,7 +156,7 @@ Makefile, `.env.example`, Python metadata, lockfile та конфігураці�
 Робочий `.env`, секрети, caches, логи й документація виключені.
 
 SHA-256 snapshot останнього повного прогону:
-`1bcb3351ce4ffaf6903fdfd56343563c3f323dd0b3b4602d100274e9e616caa0`.
+`546ba617561a040d7e2f8a0227b59a0316130f7b428a9d7ce0eb550a0608bdd8`.
 
 Щоб записати новий manifest, не перезаписуючи докази попередніх перевірок:
 

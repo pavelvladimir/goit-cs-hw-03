@@ -7,6 +7,7 @@ from typing import TypedDict, cast
 from bson import ObjectId, json_util
 from pymongo.collection import Collection
 from pymongo.errors import DuplicateKeyError, PyMongoError
+from pymongo.results import UpdateResult
 
 from conf.db import mongo_client
 from conf.logging import report_error
@@ -80,24 +81,22 @@ def read_cat_by_name(
 
 def update_cat_age(
     collection: Collection[CatDocument], name: object, age: object
-) -> bool:
-    """Update: оновити вік; повернути, чи знайдено кота."""
-    result = collection.update_one(
+) -> UpdateResult:
+    """Update: оновити вік; повернути кількість знайдених і змінених документів."""
+    return collection.update_one(
         {"name": clean_name(name)}, {"$set": {"age": validate_age(age)}}
     )
-    return result.matched_count > 0
 
 
 def add_cat_feature(
     collection: Collection[CatDocument], name: object, feature: object
-) -> bool:
-    """Update: додати характеристику через $addToSet без повторів."""
+) -> UpdateResult:
+    """Update: додати без повторів; повернути кількість знайдених і змінених котів."""
     if not isinstance(feature, str) or not feature.strip():
         raise ValueError("Характеристика не може бути порожньою.")
-    result = collection.update_one(
+    return collection.update_one(
         {"name": clean_name(name)}, {"$addToSet": {"features": feature.strip()}}
     )
-    return result.matched_count > 0
 
 
 def delete_cat_by_name(collection: Collection[CatDocument], name: object) -> bool:
@@ -168,15 +167,25 @@ def run_menu(collection: Collection[CatDocument]) -> None:
                 cat_id = create_cat(collection, name, age, features)
                 print(f"Кота додано: {cat_id}")
             elif choice == "4":
-                found = update_cat_age(
+                result = update_cat_age(
                     collection, input("Ім'я: "), int(input("Новий вік: "))
                 )
-                print("Вік збережено." if found else "Кота не знайдено.")
+                if result.matched_count == 0:
+                    print("Кота не знайдено.")
+                elif result.modified_count == 0:
+                    print("Вік уже має вказане значення. Змін не внесено.")
+                else:
+                    print("Вік збережено.")
             elif choice == "5":
-                found = add_cat_feature(
+                result = add_cat_feature(
                     collection, input("Ім'я: "), input("Характеристика: ")
                 )
-                print("Характеристику збережено." if found else "Кота не знайдено.")
+                if result.matched_count == 0:
+                    print("Кота не знайдено.")
+                elif result.modified_count == 0:
+                    print("Така характеристика вже є. Змін не внесено.")
+                else:
+                    print("Характеристику збережено.")
             elif choice == "6":
                 found = delete_cat_by_name(collection, input("Ім'я: "))
                 print("Кота видалено." if found else "Кота не знайдено.")
