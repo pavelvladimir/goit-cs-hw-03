@@ -122,16 +122,18 @@ def test_concurrent_features_neither_duplicate_nor_lose_updates(
         cats.create_cat(collection, "barsik", 3, ["грайливий"])
         try:
 
-            def update(index: int, barrier: Barrier) -> bool:
+            def update(index: int, barrier: Barrier) -> tuple[int, int]:
                 with mongo_client(config) as worker:
                     worker.admin.command("ping")
                     target = cast(
                         Collection[cats.CatDocument], worker[config.database].race_cats
                     )
                     barrier.wait()
-                    return cats.add_cat_feature(target, "barsik", features[index])
+                    result = cats.add_cat_feature(target, "barsik", features[index])
+                    return result.matched_count, result.modified_count
 
-            assert race(update) == [True, True]
+            expected = [(1, 0), (1, 1)] if same_feature else [(1, 1), (1, 1)]
+            assert sorted(race(update)) == expected
             document = cats.read_cat_by_name(collection, "barsik")
             assert document is not None
             assert document["age"] == 3

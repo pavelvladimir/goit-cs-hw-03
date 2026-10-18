@@ -7,11 +7,13 @@ import sys
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
-from unittest.mock import patch
+from typing import cast
+from unittest.mock import Mock, patch
 
 import psycopg
 import pytest
-from pymongo.errors import ConnectionFailure
+from pymongo.collection import Collection
+from pymongo.errors import ConnectionFailure, OperationFailure, PyMongoError
 
 import create_tables
 import main as cats
@@ -75,6 +77,36 @@ class CommandLineTests(unittest.TestCase):
         ):
             client.side_effect = KeyboardInterrupt
             self.assertEqual(cats.main(), 0)
+
+
+@pytest.mark.parametrize(("choice", "value"), [("4", "4"), ("5", "лагідний")])
+@pytest.mark.parametrize(
+    "error",
+    [
+        ConnectionFailure("private-driver-details"),
+        OperationFailure("private-driver-details", code=13),
+    ],
+)
+def test_mongodb_update_failure_does_not_report_success_and_menu_continues(
+    choice: str, value: str, error: PyMongoError, capsys: pytest.CaptureFixture[str]
+) -> None:
+    collection = Mock(spec=Collection)
+    collection.update_one.side_effect = error
+    collection.find_one.return_value = {"name": "barsik", "age": 3, "features": []}
+    with patch(
+        "builtins.input", side_effect=[choice, "barsik", value, "2", "barsik", "0"]
+    ):
+        cats.run_menu(cast(Collection[cats.CatDocument], collection))
+    output = capsys.readouterr()
+    assert "Помилка MongoDB" in output.err
+    assert "private-driver-details" not in output.err
+    assert "private-driver-details" not in output.out
+    assert "збережено" not in output.out
+    assert "Змін не внесено" not in output.out
+    assert "Кота не знайдено" not in output.out
+    assert '"name": "barsik"' in output.out
+    collection.update_one.assert_called_once()
+    collection.find_one.assert_called_once_with({"name": "barsik"})
 
 
 @pytest.mark.parametrize("script", ["create_tables.py", "seed.py", "main.py"])
